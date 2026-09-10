@@ -28,4 +28,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: PlayVideo-release-AAB
-          path: "**/build/outputs/bundle/release
+          path: '**/build/outputs/bundle/release/*.aab'
