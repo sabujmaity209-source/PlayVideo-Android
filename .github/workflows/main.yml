@@ -1,0 +1,32 @@
+name: Build PlayVideo Android
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract AI Studio project
+        run: |
+          mkdir project
+          unzip -q *.zip -d project
+          find project -maxdepth 3 -type f | head -100
+
+      - name: Build APK
+        run: |
+          ANDROID_DIR=$(find project -type f -name gradlew | head -1 | xargs dirname)
+          echo "Android project: $ANDROID_DIR"
+          cd "$ANDROID_DIR"
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: PlayVideo-debug-APK
+          path: "**/build/outputs/apk/debug/*.apk"
