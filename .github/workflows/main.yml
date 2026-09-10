@@ -1,4 +1,3 @@
-name: Build PlayVideo AAB
 
 on:
   workflow_dispatch:
@@ -29,4 +28,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: PlayVideo-release-AAB
-          path: "**/build/outputs/bundle/release/*.aab"
+          path: "**/build/outputs
