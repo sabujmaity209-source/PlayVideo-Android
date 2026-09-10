@@ -1,3 +1,4 @@
+name: Build PlayVideo AAB
 
 on:
   workflow_dispatch:
@@ -14,15 +15,31 @@ jobs:
         run: |
           mkdir project
           unzip -q *.zip -d project
-          find project -type f -name gradlew -print
+
+          echo "=== ZIP CONTENTS ==="
+          unzip -l *.zip | head -100
+
+          echo "=== ANDROID FILES ==="
+          find project -type f \( -name "settings.gradle" -o -name "settings.gradle.kts" -o -name "build.gradle" \) -print
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.2.1"
 
       - name: Build Release AAB
         run: |
-          ANDROID_DIR=$(find project -type f -name gradlew | head -1 | xargs dirname)
+          ANDROID_DIR=$(find project -type f -name "settings.gradle" -print -quit | xargs -r dirname)
+
+          if [ -z "$ANDROID_DIR" ]; then
+            echo "ERROR: Android project (settings.gradle) not found in ZIP."
+            exit 1
+          fi
+
           echo "Android project: $ANDROID_DIR"
           cd "$ANDROID_DIR"
-          chmod +x gradlew
-          ./gradlew bundleRelease --no-daemon
+
+          gradle bundleRelease --no-daemon
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
