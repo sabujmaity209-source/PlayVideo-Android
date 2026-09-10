@@ -16,15 +16,12 @@ jobs:
           mkdir project
           unzip -q *.zip -d project
 
-          echo "=== ANDROID FILES ==="
-          find project -type f \( -name "settings.gradle" -o -name "build.gradle" \) -print
-
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.2.1"
 
-      - name: Add Capacitor dependency
+      - name: Prepare Android project
         run: |
           ANDROID_DIR=$(find project -type f -name "settings.gradle" -print -quit | xargs -r dirname)
 
@@ -35,9 +32,15 @@ jobs:
 
           echo "Android project: $ANDROID_DIR"
 
+          sed -i "s/compileSdk 34/compileSdk 36/" "$ANDROID_DIR/app/build.gradle"
+          sed -i "s/targetSdk 34/targetSdk 36/" "$ANDROID_DIR/app/build.gradle"
+
           sed -i "/implementation 'com.google.android.material:material:1.11.0'/a\\        implementation 'com.capacitorjs:core:6.1.0'" "$ANDROID_DIR/app/build.gradle"
 
-          echo "=== CAPACITOR DEPENDENCY ==="
+          echo "=== SDK ==="
+          grep -nE "compileSdk|targetSdk" "$ANDROID_DIR/app/build.gradle"
+
+          echo "=== CAPACITOR ==="
           grep -n "capacitorjs" "$ANDROID_DIR/app/build.gradle"
 
       - name: Build Release AAB
