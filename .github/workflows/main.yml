@@ -1,4 +1,4 @@
-name: Build PlayVideo AAB
+name: Build PlayVideo APK
 
 on:
   workflow_dispatch:
@@ -8,13 +8,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout Android project
         uses: actions/checkout@v4
 
-      - name: Extract AI Studio project
+      - name: Extract Android project
         run: |
           mkdir project
           unzip -q *.zip -d project
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build PlayVideo web app
+        run: |
+          git clone https://github.com/sabujmaity209-source/Playvideo.git web
+          cd web
+          npm install
+          npm run build
+
+      - name: Copy web app into Android
+        run: |
+          ANDROID_DIR=$(find project -type f -name "settings.gradle" -print -quit | xargs -r dirname)
+
+          mkdir -p "$ANDROID_DIR/app/src/main/assets/public"
+          cp -r web/dist/. "$ANDROID_DIR/app/src/main/assets/public/"
+
+          echo "Web files copied successfully:"
+          find "$ANDROID_DIR/app/src/main/assets/public" -maxdepth 2 -type f | head -30
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -25,32 +47,19 @@ jobs:
         run: |
           ANDROID_DIR=$(find project -type f -name "settings.gradle" -print -quit | xargs -r dirname)
 
-          if [ -z "$ANDROID_DIR" ]; then
-            echo "ERROR: Android project not found."
-            exit 1
-          fi
-
-          echo "Android project: $ANDROID_DIR"
-
           sed -i "s/compileSdk 34/compileSdk 36/" "$ANDROID_DIR/app/build.gradle"
           sed -i "s/targetSdk 34/targetSdk 36/" "$ANDROID_DIR/app/build.gradle"
 
           sed -i "/implementation 'com.google.android.material:material:1.11.0'/a\\        implementation 'com.capacitorjs:core:6.1.0'" "$ANDROID_DIR/app/build.gradle"
 
-          echo "=== SDK ==="
-          grep -nE "compileSdk|targetSdk" "$ANDROID_DIR/app/build.gradle"
-
-          echo "=== CAPACITOR ==="
-          grep -n "capacitorjs" "$ANDROID_DIR/app/build.gradle"
-
-      - name: Build Release AAB
+      - name: Build Release APK
         run: |
           ANDROID_DIR=$(find project -type f -name "settings.gradle" -print -quit | xargs -r dirname)
           cd "$ANDROID_DIR"
-          gradle bundleRelease --no-daemon
+          gradle assembleRelease --no-daemon
 
-      - name: Upload AAB
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: PlayVideo-release-AAB
-          path: '**/build/outputs/bundle/release/*.aab'
+          name: PlayVideo-working-APK
+          path: '**/build/outputs/apk/release/*.apk'
