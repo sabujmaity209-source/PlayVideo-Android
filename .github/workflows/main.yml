@@ -52,7 +52,7 @@ jobs:
 
           sed -i "/implementation 'com.google.android.material:material:1.11.0'/a\\        implementation 'com.capacitorjs:core:6.1.0'" "$ANDROID_DIR/app/build.gradle"
 
-            - name: Build Release AAB
+                  - name: Build Release AAB
         run: |
           ANDROID_DIR=$(find project -type f -name "settings.gradle" -print -quit | xargs -r dirname)
           cd "$ANDROID_DIR"
